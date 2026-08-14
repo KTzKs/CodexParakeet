@@ -1,0 +1,122 @@
+﻿<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="CodexParakeetは、Codex CLIの応答をVOICEVOX COREで読み上げるWindows向け音声読み上げアプリです。空間音声、インコのリップシンク、シンプルな設定画面に対応。">
+  <meta name="keywords" content="CodexParakeet,Codex CLI,音声読み上げ,VOICEVOX CORE,Windows,リップシンク">
+  <meta name="author" content="nakaken-27">
+  <meta name="theme-color" content="#4c67e8">
+  <meta name="robots" content="index,follow">
+  <link rel="canonical" href="https://nakaken-27.github.io/CodexParakeet/">
+  <meta property="og:locale" content="ja_JP">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="CodexParakeet">
+  <meta property="og:title" content="CodexParakeet | Codex CLIを、耳で聴く">
+  <meta property="og:description" content="Codex CLIの応答を日本語音声で読み上げる、Windows向けアプリ。空間音声とインコのリップシンクにも対応。">
+  <meta property="og:url" content="https://nakaken-27.github.io/CodexParakeet/">
+  <meta property="og:image" content="https://nakaken-27.github.io/CodexParakeet/assets/screen.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="CodexParakeet | Codex CLIを、耳で聴く">
+  <meta name="twitter:description" content="Codex CLIの応答を日本語音声で読み上げるWindows向けアプリ。">
+  <meta name="twitter:image" content="https://nakaken-27.github.io/CodexParakeet/assets/screen.png">
+  <title>CodexParakeet | Codex CLIを、耳で聴く</title>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "CodexParakeet",
+    "applicationCategory": "MultimediaApplication",
+    "operatingSystem": "Windows 11",
+    "description": "Codex CLIの応答をVOICEVOX COREで読み上げるWindows向け音声読み上げアプリ。",
+    "url": "https://nakaken-27.github.io/CodexParakeet/",
+    "downloadUrl": "https://github.com/nakaken-27/CodexParakeet/releases",
+    "image": "https://nakaken-27.github.io/CodexParakeet/assets/screen.png",
+    "license": "https://github.com/nakaken-27/CodexParakeet/blob/main/LICENSE"
+  }
+  </script>
+  <style>
+    :root { --ink:#172033; --muted:#63708a; --line:#e7ebf3; --blue:#4c67e8; --violet:#7559d9; --pale:#f5f7ff; }
+    * { box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
+    body { margin:0; color:var(--ink); background:#fff; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP",sans-serif; line-height:1.8; }
+    a { color:var(--blue); }
+    .wrap { width:min(1080px, calc(100% - 40px)); margin:auto; }
+    header { padding:22px 0; border-bottom:1px solid var(--line); }
+    nav { display:flex; align-items:center; justify-content:space-between; gap:20px; }
+    .brand { color:var(--ink); text-decoration:none; font-weight:800; font-size:1.15rem; }
+    nav a:not(.brand) { color:var(--muted); text-decoration:none; margin-left:22px; font-size:.92rem; }
+    .hero { overflow:hidden; padding:100px 0 88px; background:radial-gradient(circle at 85% 20%,#e2e5ff 0,transparent 30%), linear-gradient(135deg,#f8f9ff,#fff 65%); }
+    .hero-grid { display:grid; grid-template-columns:1.05fr .95fr; align-items:center; gap:60px; }
+    .eyebrow { color:var(--blue); font-weight:800; letter-spacing:.12em; font-size:.78rem; }
+    h1 { margin:12px 0 18px; font-size:clamp(2.5rem,6vw,4.8rem); line-height:1.15; letter-spacing:-.05em; }
+    h1 span { color:var(--violet); }
+    .lead { color:var(--muted); font-size:1.18rem; max-width:560px; }
+    .buttons { display:flex; flex-wrap:wrap; gap:12px; margin-top:30px; }
+    .button { display:inline-block; padding:12px 22px; border-radius:999px; text-decoration:none; font-weight:700; }
+    .primary { color:#fff; background:linear-gradient(100deg,var(--blue),var(--violet)); box-shadow:0 10px 24px #5b65d333; }
+    .secondary { color:var(--ink); border:1px solid #ccd3e7; background:#fff; }
+    .hero img { width:100%; border-radius:16px; box-shadow:0 24px 60px #26325a26; border:1px solid #fff; }
+    section { padding:82px 0; }
+    .soft { background:var(--pale); }
+    .section-title { margin:0 0 10px; font-size:2rem; letter-spacing:-.03em; }
+    .section-lead { margin:0 0 34px; color:var(--muted); }
+    .cards { display:grid; grid-template-columns:repeat(3,1fr); gap:18px; }
+    .card { padding:26px; background:#fff; border:1px solid var(--line); border-radius:16px; }
+    .card .icon { font-size:1.7rem; }
+    .card h3 { margin:8px 0; }
+    .card p { margin:0; color:var(--muted); font-size:.95rem; }
+    .mouths { display:flex; align-items:end; gap:5px; height:45px; margin:12px 0 4px; }
+    .mouths img { width:32px; height:32px; object-fit:contain; }
+    .setting-shot { display:block; width:100%; height:78px; object-fit:cover; object-position:top; margin:12px 0 10px; border-radius:8px; border:1px solid var(--line); }
+    .steps { display:grid; grid-template-columns:repeat(3,1fr); gap:18px; counter-reset:step; }
+    .step { position:relative; padding:25px; border-top:3px solid var(--blue); background:#fff; border-radius:12px; box-shadow:0 8px 30px #24315c0d; }
+    .step b { color:var(--blue); font-size:.85rem; }
+    .step h3 { margin:7px 0; }
+    .step p { color:var(--muted); margin:0; font-size:.94rem; }
+    pre { margin:14px 0 0; padding:12px; overflow:auto; border-radius:8px; background:#172033; color:#edf0ff; font-size:.76rem; line-height:1.6; white-space:pre-wrap; word-break:break-all; }
+    pre code { padding:0; background:transparent; color:inherit; }
+    code { padding:2px 6px; border-radius:5px; background:#eef1fa; font-size:.88em; }
+    .notice { margin-top:25px; padding:18px 22px; border-left:4px solid var(--violet); background:#f8f5ff; color:#4c4570; }
+    .cta { text-align:center; background:linear-gradient(120deg,#202b62,#46328c); color:#fff; }
+    .cta p { color:#d9dcf5; }
+    footer { padding:28px 0; color:var(--muted); font-size:.85rem; }
+    @media (max-width:760px) { nav a:not(.brand) { margin-left:10px; font-size:.8rem; } .hero { padding:65px 0; } .hero-grid,.cards,.steps { grid-template-columns:1fr; gap:28px; } section { padding:58px 0; } }
+  </style>
+</head>
+<body>
+  <header><div class="wrap"><nav>
+    <a class="brand" href="#top">◒ CodexParakeet</a>
+    <div><a href="#features">特徴</a><a href="#setup">使い方</a><a href="https://github.com/nakaken-27/CodexParakeet">GitHub</a></div>
+  </nav></div></header>
+
+  <main id="top">
+    <section class="hero"><div class="wrap hero-grid">
+      <div><div class="eyebrow">CODEX CLI × VOICEVOX CORE</div>
+        <h1>Codex CLIを、<br><span>耳で聴く。</span></h1>
+        <p class="lead">ターミナルに流れるCodexの応答を、日本語音声でリアルタイムに読み上げるWindowsアプリ。画面を見続けなくても、開発の流れを止めません。</p>
+        <div class="buttons"><a class="button primary" href="https://github.com/nakaken-27/CodexParakeet/releases">Windows版をダウンロード</a><a class="button secondary" href="#setup">使い方を見る</a></div>
+      </div>
+      <img src="assets/screen.png" alt="CodexParakeetの設定画面">
+    </div></section>
+
+    <section id="features"><div class="wrap"><h2 class="section-title">開発のそばに、もうひとつのインターフェース</h2><p class="section-lead">目とキーボードだけに頼らない、Codexとの新しい付き合い方。</p>
+      <div class="cards"><article class="card"><div class="icon">🔊</div><h3>応答を音声で確認</h3><p>Codex CLIの通知をきっかけに、生成された応答をVOICEVOX COREで読み上げます。</p></article>
+      <article class="card"><div class="icon">📍</div><h3>空間音声に対応</h3><p>ターミナルの位置に合わせて、音の方向を感じられる空間オーディオを採用しています。</p></article>
+      <article class="card"><div class="icon">🎙️</div><h3>ターミナルごとの話者切り替え</h3><p>ターミナルごとに音声合成話者を自動切り替え。空間音声で音の方向を感じ取り、複数のターミナルから目的の音声をすばやく聞き分けられます。</p></article>
+      <article class="card"><div class="icon">🦜</div><h3>インコがリップシンク</h3><div class="mouths"><img src="assets/lipsync/mouth_closed.png" alt="口を閉じたインコ"><img src="assets/lipsync/mouth_a.png" alt="あの口のインコ"><img src="assets/lipsync/mouth_i.png" alt="いの口のインコ"><img src="assets/lipsync/mouth_o.png" alt="おの口のインコ"></div><p>音声に合わせて、可愛らしいインコのキャラクターが口を動かします。</p></article>
+      <article class="card"><div class="icon">⚙️</div><h3>シンプルな設定画面</h3><img class="setting-shot" src="assets/settings.png" alt="CodexParakeetの設定画面"><p>声・音量・読み上げなどを、迷わず調整できるシンプルな設定画面を用意しています。</p></article></div>
+    </div></section>
+
+    <section id="setup" class="soft"><div class="wrap"><h2 class="section-title">セットアップは3工程</h2><p class="section-lead">Windows x64向けのReleaseをダウンロードして、すぐに始められます。</p>
+      <div class="steps"><article class="step"><b>STEP 1</b><h3>VOICEVOX COREを配置</h3><p><a href="https://github.com/VOICEVOX/voicevox_core/releases/tag/0.16.4">VOICEVOX CORE 0.16.4 for Windows x64</a>をダウンロードして展開します。展開した中身をRelease内の <code>voicevox_core/</code> にコピーしてください。VOICEVOX COREは同梱していません。</p><p style="margin-top:12px">さらに <code>voicevox_core/c_api/lib/voicevox_core.dll</code> を、<code>CodexParakeet.exe</code> と同じ階層へコピーします。</p></article>
+      <article class="step"><b>STEP 2</b><h3>アプリを配置</h3><p>Release ZIPを展開し、<code>CodexParakeet</code> フォルダ全体を <code>C:\Program Files\CodexParakeet</code> など、PC上の好きな場所へコピーします。<code>CodexParakeet.exe</code>、<code>voicevox_core.dll</code>、<code>voicevox_core/</code>、<code>lipsync/</code> は同じ構成のまま保持してください。</p><p style="margin-top:12px">フォルダを移動した場合は、次の工程のPowerShellパスも変更します。</p></article>
+      <article class="step"><b>STEP 3</b><h3>Codex CLIを設定</h3><p>Codex CLIの設定ファイル <code>%USERPROFILE%\.codex\config.toml</code> を開き、ファイルのトップレベルに次を追加します。</p><pre><code>notify = ["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "C:\\Program Files\\CodexParakeet\\codex_speak_notify.ps1"]</code></pre><p>実際に配置したパスへ書き換えてください。既存の <code>notify</code> がある場合は置き換えます。</p></article></div>
+      <div class="notice"><strong>配置後の確認</strong><br><code>CodexParakeet.exe</code>を起動して音声設定を選び、Codex CLIから応答を受け取って読み上げが始まれば完了です。VOICEVOX COREおよび音声モデルは、それぞれのライセンスと利用規約に従って使用してください。</div>
+    </div></section>
+
+    <section class="cta"><div class="wrap"><h2 class="section-title">Codexの返事を、聴いてみよう。</h2><p>Windows x64向けのReleaseを公開中</p><div class="buttons" style="justify-content:center"><a class="button primary" href="https://github.com/nakaken-27/CodexParakeet/releases">Releaseを入手する</a><a class="button secondary" href="https://github.com/nakaken-27/CodexParakeet">ソースコードを見る</a></div></div></section>
+  </main>
+  <footer><div class="wrap">© CodexParakeet · Built for Codex CLI</div></footer>
+</body>
+</html>
