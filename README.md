@@ -8,6 +8,10 @@ CodexParakeet is a lightweight Windows application that converts Codex CLI respo
 - The application uses spatial audio. On consoles that provide terminal/window position information, speech is played as if it came from the corresponding on-screen location.
 - The available speech voices are **WhiteCUL**, **春日部つむぎ**, and **ずんだもん**.
 
+## Screenshot
+
+![CodexParakeet screenshot](assets/screen.png)
+
 ## Runtime setup
 
 The runtime folder is not committed to this repository. Create it with the setup script after placing VOICEVOX CORE under `third_party/voicevox_core/`:
@@ -67,6 +71,35 @@ third_party/voicevox_core/
 ```
 
 Please review and comply with the licenses and usage terms of VOICEVOX CORE and its voice models.
+
+## Verified environment
+
+CodexParakeet has been verified in the following environment:
+
+- Windows 11
+- The ChatGPT Codex app: [Introducing the Codex app](https://openai.com/ja-JP/index/introducing-the-codex-app/)
+- [VOICEVOX CORE 0.16.4](https://github.com/VOICEVOX/voicevox_core/releases/tag/0.16.4), x64 Windows release
+- Visual Studio 2026
+
+Other versions may work, but have not been verified by the author.
+
+## Building
+
+1. Obtain the x64 Windows release of VOICEVOX CORE 0.16.4.
+2. Place it under `third_party/voicevox_core/` as described above.
+3. Open `app_src/CodexParakeet.slnx` in Visual Studio 2026.
+4. Build the `Release` configuration for `x64`.
+5. Run `scripts/Initialize-Runtime.ps1` to assemble the runtime directory.
+
+For example:
+
+```powershell
+powershell.exe -ExecutionPolicy Bypass -File .\scripts\Initialize-Runtime.ps1 `
+  -RuntimeRoot C:\Work\CodexParakeet
+```
+
+The build requires the VOICEVOX CORE files locally, but those files are not
+committed to this repository.
 
 ## Uninstallation
 
