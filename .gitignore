@@ -429,3 +429,4 @@ FodyWeavers.xsd
 *.msp
 
 /app_src/third_party/voicevox_core/
+/third_party/voicevox_core/
