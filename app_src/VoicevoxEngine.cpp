@@ -262,7 +262,10 @@ void VoicevoxEngine::SynthesisLoop() {
             audioQueues_[playbackSlot].push_back({ wav, length, requestId, std::move(mouthSchedule),
                 job.leftDelayMs, job.rightDelayMs, job.leftGain, job.rightGain, job.threadId, playbackSlot });
         }
-        audioCondition_.notify_one();
+        // 3本のワーカーはそれぞれ別キューを監視しているため、
+        // notify_one() では別スロットのワーカーだけが起きて通知を消費する。
+        // 全ワーカーを起こし、自分のキューを持つワーカーに処理させる。
+        audioCondition_.notify_all();
     }
 }
 
