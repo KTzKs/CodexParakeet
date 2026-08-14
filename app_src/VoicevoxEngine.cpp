@@ -7,6 +7,7 @@
 #include <regex>
 #include <chrono>
 #include <cmath>
+#include <shlobj.h>
 #pragma comment(lib, "winmm.lib")
 
 // 音声出力に対するリップシンクの遅延補正値（ミリ秒）。
@@ -82,7 +83,14 @@ VoicevoxEngine::~VoicevoxEngine() {
     if (jtalk_) voicevox_open_jtalk_rc_delete(jtalk_);
 }
 bool VoicevoxEngine::Initialize(const std::filesystem::path& dir) {
-    iniPath_ = dir / L"CodexParakeet.ini";
+    wchar_t localAppData[MAX_PATH]{};
+    if (SUCCEEDED(SHGetFolderPathW(nullptr, CSIDL_LOCAL_APPDATA, nullptr, SHGFP_TYPE_CURRENT, localAppData))) {
+        iniPath_ = std::filesystem::path(localAppData) / L"CodexParakeet" / L"CodexParakeet.ini";
+        std::error_code error;
+        std::filesystem::create_directories(iniPath_.parent_path(), error);
+    } else {
+        iniPath_ = dir / L"CodexParakeet.ini";
+    }
     const auto root = dir / L"voicevox_core";
     const auto ort = (root / L"onnxruntime/lib/voicevox_onnxruntime.dll").string();
     const auto dic = (root / L"dict/open_jtalk_dic_utf_8-1.11").string();

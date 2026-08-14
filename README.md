@@ -26,8 +26,25 @@ CodexParakeet/
 ├─ CodexParakeet.exe
 ├─ codex_speak_notify.ps1
 ├─ lipsync/
-└─ voicevox_core/
+├─ voicevox_core/
+│  ├─ c_api/
+│  │  ├─ include/
+│  │  └─ lib/
+│  ├─ dict/
+│  │  └─ open_jtalk_dic_utf_8-1.11/
+│  ├─ models/
+│  │  └─ vvms/
+│  └─ onnxruntime/
+│     └─ lib/
+└─ voicevox_core.dll
 ```
+
+The `voicevox_core` directory must retain this hierarchy. In particular, the
+Open JTalk dictionary, VVM voice models, and ONNX Runtime DLL must remain below
+their respective directories.
+
+The application stores user settings in `%LOCALAPPDATA%\CodexParakeet\CodexParakeet.ini`.
+CodexParakeet does not use the Windows Registry.
 
 ## Codex CLI configuration
 
@@ -50,3 +67,15 @@ third_party/voicevox_core/
 ```
 
 Please review and comply with the licenses and usage terms of VOICEVOX CORE and its voice models.
+
+## Uninstallation
+
+CodexParakeet does not include an installer or an uninstaller. To remove it:
+
+1. Delete the runtime folder where you placed `CodexParakeet.exe` and its related files.
+2. Remove the CodexParakeet `notify` entry from `config.toml`, or restore the previous `config.toml` content.
+3. Delete `%LOCALAPPDATA%\CodexParakeet` to remove the saved application settings.
+
+The application does not create Registry entries. VOICEVOX CORE files placed in
+the repository's `third_party/voicevox_core/` directory are also not removed by
+deleting the runtime folder; remove them separately if you no longer need them.

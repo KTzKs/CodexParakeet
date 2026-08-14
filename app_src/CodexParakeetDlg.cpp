@@ -14,6 +14,7 @@
 #include <array>
 #include <chrono>
 #include <iomanip>
+#include <shlobj.h>
 #include <atlimage.h>
 
 #pragma comment(lib, "shell32.lib")
@@ -439,6 +440,14 @@ void CCodexParakeetDlg::OnDestroy()
 
 static std::filesystem::path CodexParakeetIniPath()
 {
+	wchar_t localAppData[MAX_PATH]{};
+	if (SUCCEEDED(SHGetFolderPathW(nullptr, CSIDL_LOCAL_APPDATA, nullptr, SHGFP_TYPE_CURRENT, localAppData)))
+	{
+		const auto path = std::filesystem::path(localAppData) / L"CodexParakeet" / L"CodexParakeet.ini";
+		std::error_code error;
+		std::filesystem::create_directories(path.parent_path(), error);
+		return path;
+	}
 	wchar_t path[MAX_PATH]{};
 	GetModuleFileNameW(nullptr, path, MAX_PATH);
 	return std::filesystem::path(path).parent_path() / L"CodexParakeet.ini";
