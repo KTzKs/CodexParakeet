@@ -4,6 +4,7 @@ third_party/voicevox_core/
 
 Required directory structure:
 
+```text
 voicevox_core/
 ├─ c_api/
 │  ├─ include/
@@ -14,6 +15,7 @@ voicevox_core/
 │  └─ vvms/
 └─ onnxruntime/
    └─ lib/
+```
 
 Obtain VOICEVOX CORE from the official repository:
 
