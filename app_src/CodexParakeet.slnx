@@ -1,0 +1,7 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="CodexParakeet.vcxproj" Id="d5d1a806-336f-39da-8077-b57416977ad2" />
+</Solution>
