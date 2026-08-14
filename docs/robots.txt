@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://nakaken-27.github.io/CodexParakeet/sitemap.xml
+Sitemap: https://ktzks.github.io/CodexParakeet/sitemap.xml
