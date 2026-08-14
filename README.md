@@ -2,6 +2,8 @@
 
 CodexParakeet is a lightweight Windows application that converts Codex CLI responses into synthesized speech. It currently supports Japanese voice output using [VOICEVOX CORE](https://github.com/VOICEVOX/voicevox_core).
 
+詳しい紹介とスクリーンショットは、[CodexParakeet 公式ページ](https://ktzks.github.io/CodexParakeet/)をご覧ください。
+
 Version: **0.6.0**
 
 ## Download
