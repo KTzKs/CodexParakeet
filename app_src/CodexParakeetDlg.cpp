@@ -22,7 +22,7 @@
 #define SIZE1_WIDTH 280
 #define SIZE1_HEIGHT 220
 
-#define SIZE2_WIDTH 740
+#define SIZE2_WIDTH 680
 #define SIZE2_HEIGHT 300
 
 static void WriteSpeakLog(const std::wstring& message)
