@@ -21,7 +21,7 @@
   <meta name="twitter:description" content="Codex CLIの応答を日本語音声で読み上げるWindows向けアプリ。">
   <meta name="twitter:image" content="https://ktzks.github.io/CodexParakeet/assets/screen.png">
   <meta name="google-site-verification" content="8i4r-bei2eL3W3UyIDlVSo4boRNmSA0-hMmwZs3cgMc" />
-  <title>CodexParakeet | Codex CLIを、耳で聴く</title>
+  <title>CodexParakeet | Codex CLIを、「聴く」という贅沢</title>
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -48,7 +48,7 @@
     .brand { color:var(--ink); text-decoration:none; font-weight:800; font-size:1.15rem; }
     nav a:not(.brand) { color:var(--muted); text-decoration:none; margin-left:22px; font-size:.92rem; }
     .hero { overflow:hidden; padding:100px 0 88px; background:radial-gradient(circle at 85% 20%,#e2e5ff 0,transparent 30%), linear-gradient(135deg,#f8f9ff,#fff 65%); }
-    .hero-grid { display:grid; grid-template-columns:1.05fr .95fr; align-items:center; gap:60px; }
+    .hero-grid { display:grid; grid-template-columns:1.2fr .8fr; align-items:center; gap:60px; }
     .eyebrow { color:var(--blue); font-weight:800; letter-spacing:.12em; font-size:.78rem; }
     h1 { margin:12px 0 18px; font-size:clamp(2.5rem,6vw,4.8rem); line-height:1.15; letter-spacing:-.05em; }
     h1 span { color:var(--violet); }
@@ -83,6 +83,7 @@
     .cta p { color:#d9dcf5; }
     footer { padding:28px 0; color:var(--muted); font-size:.85rem; }
     @media (max-width:760px) { nav a:not(.brand) { margin-left:10px; font-size:.8rem; } .hero { padding:65px 0; } .hero-grid,.cards,.steps { grid-template-columns:1fr; gap:28px; } section { padding:58px 0; } }
+    pre .highlight { color: #ffd166; font-weight: 700;}
   </style>
 </head>
 <body>
@@ -94,27 +95,43 @@
   <main id="top">
     <section class="hero"><div class="wrap hero-grid">
       <div><div class="eyebrow">CODEX CLI × VOICEVOX CORE</div>
-        <h1>Codex CLIを、<br><span>耳で聴く。</span></h1>
-        <p class="lead">ターミナルに流れるCodexの応答を、日本語音声でリアルタイムに読み上げるWindowsアプリ。画面を見続けなくても、開発の流れを止めません。<br/>すべて無料でお使いいただけます。</p>
+        <h1>Codex CLIを、<br><span>「聴く」という贅沢</span></h1>
+        <p class="lead">ターミナルに流れるCodexの応答を、日本語音声でリアルタイムに読み上げる無料のWindowsアプリ。画面を見続けなくても、開発の流れを止めません。</p>
         <div class="buttons"><a class="button primary" href="https://github.com/KTzKs/CodexParakeet/releases">Windows版をダウンロード</a><a class="button secondary" href="#setup">使い方を見る</a></div>
       </div>
       <img src="assets/screen.png" alt="CodexParakeetの設定画面">
     </div></section>
 
     <section id="features"><div class="wrap"><h2 class="section-title">開発のそばに、もうひとつのインターフェース</h2><p class="section-lead">目とキーボードだけに頼らない、Codexとの新しい付き合い方。</p>
-      <div class="cards"><article class="card"><div class="icon">🔊</div><h3>応答を音声で確認</h3><p>Codex CLIの通知をきっかけに、生成された応答をVOICEVOX COREで読み上げます。</p></article>
-      <article class="card"><div class="icon">📍</div><h3>空間音声に対応</h3><p>ターミナルの位置に合わせて、音の方向を感じられる空間オーディオを採用しています。</p></article>
-      <article class="card"><div class="icon">🎙️</div><h3>ターミナルごとの話者切り替え</h3><p>ターミナルごとに音声合成話者を自動切り替え。空間音声で音の方向を感じ取り、複数のターミナルから目的の音声をすばやく聞き分けられます。</p></article>
-      <article class="card"><div class="icon">🦜</div><h3>インコがリップシンク</h3><div class="mouths"><img src="assets/lipsync/mouth_closed.png" alt="口を閉じたインコ"><img src="assets/lipsync/mouth_a.png" alt="あの口のインコ"><img src="assets/lipsync/mouth_i.png" alt="いの口のインコ"><img src="assets/lipsync/mouth_o.png" alt="おの口のインコ"></div><p>音声に合わせて、可愛らしいインコのキャラクターが口を動かします。</p></article>
+      <div class="cards"><article class="card"><div class="icon">🔊</div><h3>応答を音声で確認</h3><p>Codex CLIの通知をきっかけに、生成された応答を自然な合成音声で読み上げるため、Codexの作業完了に素早く対応可能です。3つのターミナルごとに話者を設定し、それぞれの応答を音声で読み上げます。</p></article>
+      <article class="card"><div class="icon">📍</div><h3>空間音声に対応</h3><p>ターミナルの位置に合わせて、音の方向を感じられる空間オーディオを採用しています。複数のターミナルから、音声情報を頼りに目的のターミナルを探し出せます。</p></article>
+      <article class="card"><div class="icon">🦜</div><h3>インコ(Parakeet)がリップシンク</h3><div class="mouths"><img src="assets/lipsync/mouth_closed.png" alt="口を閉じたインコ"><img src="assets/lipsync/mouth_a.png" alt="あの口のインコ"><img src="assets/lipsync/mouth_i.png" alt="いの口のインコ"><img src="assets/lipsync/mouth_o.png" alt="おの口のインコ"></div><p>音声に合わせて、可愛らしいインコのキャラクターが口を動かします。</p></article>
       <article class="card"><div class="icon">⚙️</div><h3>シンプルな設定画面</h3><img class="setting-shot" src="assets/settings.png" alt="CodexParakeetの設定画面"><p>声・音量・読み上げなどを、迷わず調整できるシンプルな設定画面を用意しています。</p></article>
-      <article class="card"><div class="icon">💼</div><h3>無料・商用利用可能</h3><p>CodexParakeetは無料で利用でき、商用利用にも対応しています。</p></article></div>
+      <article class="card"><div class="icon">💰️</div><h3>無料・商用利用可能</h3><p>CodexParakeetは無料で利用できます。MITライセンスに則り、商用利用にも対応しています。</p></article></div>
     </div></section>
 
     <section id="setup" class="soft"><div class="wrap"><h2 class="section-title">セットアップは3工程</h2><p class="section-lead">Windows x64向けのReleaseをダウンロードして、すぐに始められます。</p>
-      <div class="steps"><article class="step"><b>STEP 1</b><h3>VOICEVOX COREを配置</h3><p><a href="https://github.com/VOICEVOX/voicevox_core/releases/tag/0.16.4">VOICEVOX CORE 0.16.4 for Windows x64</a>をダウンロードして展開します。展開した中身をRelease内の <code>voicevox_core/</code> にコピーしてください。VOICEVOX COREは同梱していません。</p><p style="margin-top:12px">さらに <code>voicevox_core/c_api/lib/voicevox_core.dll</code> を、<code>CodexParakeet.exe</code> と同じ階層へコピーします。</p></article>
-      <article class="step"><b>STEP 2</b><h3>アプリを配置</h3><p>Release ZIPを展開し、<code>CodexParakeet</code> フォルダ全体を <code>C:\Program Files\CodexParakeet</code> など、PC上の好きな場所へコピーします。<code>CodexParakeet.exe</code>、<code>voicevox_core.dll</code>、<code>voicevox_core/</code>、<code>lipsync/</code> は同じ構成のまま保持してください。</p><p style="margin-top:12px">フォルダを移動した場合は、次の工程のPowerShellパスも変更します。</p></article>
-      <article class="step"><b>STEP 3</b><h3>Codex CLIを設定</h3><p>Codex CLIの設定ファイル <code>%USERPROFILE%\.codex\config.toml</code> を開き、ファイルのトップレベルに次を追加します。</p><pre><code>notify = ["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "C:\\Program Files\\CodexParakeet\\codex_speak_notify.ps1"]</code></pre><p>実際に配置したパスへ書き換えてください。既存の <code>notify</code> がある場合は置き換えます。</p></article></div>
-      <div class="notice"><strong>配置後の確認</strong><br><code>CodexParakeet.exe</code>を起動して音声設定を選び、Codex CLIから応答を受け取って読み上げが始まれば完了です。VOICEVOX COREおよび音声モデルは、それぞれのライセンスと利用規約に従って使用してください。</div>
+      <div class="steps"><article class="step"><b>STEP 1</b><h3>VOICEVOX COREを配置</h3><p><a href="https://github.com/KTzKs/CodexParakeet/releases">CodexParakeetのRelease版</a>を展開し、CodexParakeetフォルダを作成します。</p><p style="margin-top:12px">次に、<a href="https://github.com/VOICEVOX/voicevox_core/releases/tag/0.16.4">VOICEVOX CORE 0.16.4 for Windows x64</a>をダウンロードし、展開したVOICEVOX COREフォルダの中身を、CodexParakeetフォルダ内の <code>voicevox_core/</code> にコピーしてください。</p><p style="margin-top:12px">さらに <code>voicevox_core/c_api/lib/voicevox_core.dll</code> を、<code>CodexParakeet.exe</code> と同じトップ階層へコピーします。</p>
+<pre><code>CodexParakeet/
+├─ CodexParakeet.exe
+├─ codex_speak_notify.ps1
+├─ lipsync/
+├─ <span class="highlight">voicevox_core/</span>
+│  ├─ c_api/
+│  │  ├─ include/
+│  │  └─ lib/
+│  ├─ dict/
+│  │  └─ open_jtalk_dic_utf_8-1.11/
+│  ├─ models/
+│  │  └─ vvms/
+│  └─ onnxruntime/
+│     └─ lib/
+└─ <span class="highlight">voicevox_core.dll</span>
+</code></pre>
+</article>
+      <article class="step"><b>STEP 2</b><h3>アプリを配置</h3><p>STEP1で作成した <code>CodexParakeet</code> フォルダ全体を <code>C:\Program Files\CodexParakeet</code> など、PC上の好きな場所へ移動します。</p></article>
+      <article class="step"><b>STEP 3</b><h3>Codex CLIを設定</h3><p>Codex CLIの設定ファイル <code>%USERPROFILE%\.codex\config.toml</code> を開き、ファイルのトップレベルに次を追加します。</p><pre><code>notify = ["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "C:\\Program Files\\CodexParakeet\\codex_speak_notify.ps1"]</code></pre><p>"C:\\Program Files" 部分は、STEP2で実際に配置したパスへ書き換えてください。</p><p style="margin-top:12px">また、notify は ファイルのトップレベルで定義する必要があるため、ファイルの先頭付近、[xxx] のようなセクションが始まる前に書いて下さい。</p></article></div>
+      <div class="notice"><strong>配置後の確認</strong><br>Codex CLIを立ち上げ直し、Codex CLIからの応答を受け取って読み上げが始まれば完了です。VOICEVOX COREおよび音声モデルは、それぞれのライセンスと利用規約に従って使用してください。</div>
     </div></section>
 
     <section class="cta"><div class="wrap"><h2 class="section-title">Codexの返事を、聴いてみよう。</h2><p>Windows x64向けのReleaseを公開中</p><div class="buttons" style="justify-content:center"><a class="button primary" href="https://github.com/KTzKs/CodexParakeet/releases">Releaseを入手する</a><a class="button secondary" href="https://github.com/KTzKs/CodexParakeet">ソースコードを見る</a></div></div></section>
