@@ -130,7 +130,7 @@
 </code></pre>
 </article>
       <article class="step"><b>STEP 2</b><h3>アプリを配置</h3><p>STEP1で作成した <code>CodexParakeet</code> フォルダ全体を <code>C:\Program Files\CodexParakeet</code> など、PC上の好きな場所へ移動します。</p></article>
-      <article class="step"><b>STEP 3</b><h3>Codex CLIを設定</h3><p>Codex CLIの設定ファイル <code>%USERPROFILE%\.codex\config.toml</code> を開き、ファイルのトップレベルに次を追加します。</p><pre><code>notify = ["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "C:\\Program Files\\CodexParakeet\\codex_speak_notify.ps1"]</code></pre><p>"C:\\Program Files" 部分は、STEP2で実際に配置したパスへ書き換えてください。</p><p style="margin-top:12px">また、notify は ファイルのトップレベルで定義する必要があるため、ファイルの先頭付近、[xxx] のようなセクションが始まる前に書いて下さい。</p></article></div>
+      <article class="step"><b>STEP 3</b><h3>Codex CLIを設定</h3><p>Codex CLIの設定ファイル <code>%USERPROFILE%\.codex\config.toml</code> を開き、ファイルのトップレベルに次を追加します。</p><pre><code>notify = ["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "C:\\Program Files\\CodexParakeet\\codex_speak_notify.ps1"]</code></pre><p>"C:\\Program Files" 部分は、STEP2で実際に配置したパスへ書き換えてください。<br/>※パスの区切りは「\\」です</p><p style="margin-top:12px">また、notify は ファイルのトップレベルで定義する必要があるため、ファイルの先頭付近、[xxx] のようなセクションが始まる前に書いて下さい。</p></article></div>
       <div class="notice"><strong>配置後の確認</strong><br>Codex CLIを立ち上げ直し、Codex CLIからの応答を受け取って読み上げが始まれば完了です。VOICEVOX COREおよび音声モデルは、それぞれのライセンスと利用規約に従って使用してください。</div>
     </div></section>
 
