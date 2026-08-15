@@ -19,10 +19,27 @@ public static class WP {
 '@ -ErrorAction Stop
     if ($args.Count -eq 0) { Log 'NO_ARGS'; exit 0 }
     $p = $args[0] | ConvertFrom-Json
+    $type = [string]$p.type
+    $status = [string]$p.status
+    $event = [string]$p.event
+    $eventType = [string]$p.'event-type'
+    Log "NOTIFICATION type=$type status=$status event=$event eventType=$eventType properties=$((($p | Get-Member -MemberType NoteProperty).Name -join ','))"
     $tid = [string]$p.'thread-id'
     $msg = [string]$p.last_assistant_message
     if ([string]::IsNullOrWhiteSpace($msg)) { $msg = [string]$p.'last-assistant-message' }
     Log "PAYLOAD thread=$tid cwd=$([string]$p.cwd) length=$($msg.Length) exe=$(Test-Path $exe)"
+    $trimmedMessage = $msg.Trim()
+    if ($trimmedMessage.StartsWith('{') -and $trimmedMessage.EndsWith('}')) {
+        try {
+            $metadata = $trimmedMessage | ConvertFrom-Json -ErrorAction Stop
+            $properties = @($metadata | Get-Member -MemberType NoteProperty | Select-Object -ExpandProperty Name)
+            if ($properties -contains 'title' -and $properties -contains 'description') {
+                Log 'IGNORED internal title/description metadata'
+                exit 0
+            }
+        }
+        catch { }
+    }
     Log 'MESSAGE_BEGIN'
     Log $msg
     Log 'MESSAGE_END'
@@ -50,7 +67,11 @@ public static class WP {
         $id = [uint32]$q.ParentProcessId
     }
     if ([string]::IsNullOrWhiteSpace($pos)) { Log 'POSITION_NOT_FOUND' }
-    if (-not [string]::IsNullOrWhiteSpace($msg) -and (Test-Path $exe)) { Log "SPEAK pos=$pos"; & $exe $msg $tid $pos }
+    if (-not [string]::IsNullOrWhiteSpace($msg) -and (Test-Path $exe)) {
+        $messageBase64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($msg))
+        Log "SPEAK pos=$pos encodedLength=$($messageBase64.Length)"
+        & $exe "--message-base64=$messageBase64" $tid $pos
+    }
 }
 catch { Log "ERROR $($_.Exception.Message)" }
 exit 0

@@ -16,6 +16,8 @@
 #include <iomanip>
 #include <shlobj.h>
 #include <atlimage.h>
+#include <fstream>
+#include <mutex>
 
 #pragma comment(lib, "shell32.lib")
 
@@ -27,7 +29,22 @@
 
 static void WriteSpeakLog(const std::wstring& message)
 {
+#ifdef OUTPUT_LOG
+	static std::mutex logMutex;
+	std::lock_guard<std::mutex> lock(logMutex);
+	wchar_t executablePath[MAX_PATH]{};
+	GetModuleFileNameW(nullptr, executablePath, MAX_PATH);
+	const auto logPath = std::filesystem::path(executablePath).parent_path() / L"CodexParakeet.log";
+	std::wofstream log(logPath, std::ios::app);
+	if (!log) return;
+	const auto now = std::chrono::system_clock::now();
+	const auto time = std::chrono::system_clock::to_time_t(now);
+	std::tm localTime{};
+	localtime_s(&localTime, &time);
+	log << std::put_time(&localTime, L"%Y-%m-%d %H:%M:%S") << L" " << message << L"\n";
+#else
 	UNREFERENCED_PARAMETER(message);
+#endif
 }
 
 static std::wstring ToWide(const std::string& text)
@@ -212,7 +229,7 @@ BOOL CCodexParakeetDlg::OnInitDialog()
 	// 起動が競合して初回メッセージだけ落ちることがあるため、ポストしてから処理する。
 	if (__argc >= 2 && __targv[1] != nullptr && __targv[1][0] != _T('\0'))
 	{
-		initialMessage_ = __targv[1];
+		initialMessage_ = DecodeMessageArgument(__targv[1]);
 		initialThreadId_ = __argc >= 3 ? __targv[2] : _T("");
 		initialSpatial_ = __argc >= 4 ? __targv[3] : _T("");
 		WriteSpeakLog(L"initial message received; length=" + std::to_wstring(initialMessage_.GetLength()) +
@@ -579,7 +596,17 @@ void CCodexParakeetDlg::SpeakMessage(const CString& message, const CString& thre
 	{
 		lines = SelectFirstSentence(lines);
 	}
-	WriteSpeakLog(L"SpeakMessage queueing lines=" + std::to_wstring(lines.size()));
+	std::wstring spokenText;
+	for (const auto& line : lines)
+	{
+		if (!spokenText.empty()) spokenText += L"\n";
+		spokenText += line;
+	}
+	WriteSpeakLog(L"TTS threadId=" + std::wstring(threadId.GetString()) +
+		L" voice=" + std::to_wstring(it->second) +
+		L" inputLength=" + std::to_wstring(message.GetLength()) +
+		L" lines=" + std::to_wstring(lines.size()) +
+		L" text=\n" + spokenText);
 	theApp.Engine().SpeakLines(lines, std::wstring(threadId.GetString()));
 	WriteSpeakLog(L"SpeakMessage end");
 }

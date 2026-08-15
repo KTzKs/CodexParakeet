@@ -57,12 +57,13 @@ BOOL CCodexParakeetApp::InitInstance()
 				data.dwData = WM_CODEXPARAKEET_TEXT;
 				const TCHAR* threadId = __argc >= 3 ? __targv[2] : _T("");
 				const TCHAR* spatial = __argc >= 4 ? __targv[3] : _T("");
-				std::vector<TCHAR> payload(_tcslen(__targv[1]) + _tcslen(threadId) + _tcslen(spatial) + 3);
-				_tcscpy_s(payload.data(), payload.size(), __targv[1]);
-				_tcscpy_s(payload.data() + _tcslen(__targv[1]) + 1,
-					payload.size() - _tcslen(__targv[1]) - 1, threadId);
-				_tcscpy_s(payload.data() + _tcslen(__targv[1]) + _tcslen(threadId) + 2,
-					payload.size() - _tcslen(__targv[1]) - _tcslen(threadId) - 2, spatial);
+				const CString decodedMessage = DecodeMessageArgument(__targv[1]);
+				std::vector<TCHAR> payload(decodedMessage.GetLength() + _tcslen(threadId) + _tcslen(spatial) + 3);
+				_tcscpy_s(payload.data(), payload.size(), decodedMessage.GetString());
+				_tcscpy_s(payload.data() + decodedMessage.GetLength() + 1,
+					payload.size() - decodedMessage.GetLength() - 1, threadId);
+				_tcscpy_s(payload.data() + decodedMessage.GetLength() + _tcslen(threadId) + 2,
+					payload.size() - decodedMessage.GetLength() - _tcslen(threadId) - 2, spatial);
 				data.cbData = static_cast<DWORD>(payload.size() * sizeof(TCHAR));
 				data.lpData = payload.data();
 				::SendMessage(hInst, WM_COPYDATA, 0, reinterpret_cast<LPARAM>(&data));
