@@ -101,7 +101,11 @@ bool VoicevoxEngine::Initialize(const std::filesystem::path& dir) {
     if (!Ok(voicevox_open_jtalk_rc_new(dic.c_str(), &jtalk_), "Open JTalk", error_, errorMutex_)) return false;
     if (!Ok(voicevox_synthesizer_new(runtime_, jtalk_, voicevox_make_default_initialize_options(), &synthesizer_), "synthesizer", error_, errorMutex_)) return false;
     if (!Ok(voicevox_voice_model_file_open(model.c_str(), &model_), "WhiteCUL model", error_, errorMutex_)) return false;
-    if (!Ok(voicevox_synthesizer_load_voice_model(synthesizer_, model_), "load WhiteCUL model", error_, errorMutex_)) return false;
+
+	VoicevoxLoadVoiceModelOptions load_voice_options{};
+	load_voice_options.on_existing = VOICEVOX_ON_EXISTING_VOICE_MODEL_ID_SKIP;
+    if (!Ok(voicevox_synthesizer_load_voice_model(synthesizer_, model_, load_voice_options), "load WhiteCUL model", error_, errorMutex_)) return false;
+
     modelPath_ = model;
     synthesisThread_ = std::thread(&VoicevoxEngine::SynthesisLoop, this);
     // 音声項目ごとに別ワーカーが waveOut を開けるよう、再生ワーカーを複数用意する。
@@ -198,8 +202,12 @@ void VoicevoxEngine::SynthesisLoop() {
         if (modelPath_ != job.modelPath) {
             VoicevoxVoiceModelFile* nextModel = nullptr;
             const auto modelUtf8 = job.modelPath.string();
+
+            VoicevoxLoadVoiceModelOptions load_voice_options{};
+            load_voice_options.on_existing = VOICEVOX_ON_EXISTING_VOICE_MODEL_ID_SKIP;
+
             if (!Ok(voicevox_voice_model_file_open(modelUtf8.c_str(), &nextModel), "open queued voice model", error_, errorMutex_) ||
-                !Ok(voicevox_synthesizer_load_voice_model(synthesizer_, nextModel), "load queued voice model", error_, errorMutex_)) {
+                !Ok(voicevox_synthesizer_load_voice_model(synthesizer_, nextModel, load_voice_options), "load queued voice model", error_, errorMutex_)) {
                 if (nextModel) voicevox_voice_model_file_delete(nextModel);
                 continue;
             }
@@ -414,7 +422,11 @@ bool VoicevoxEngine::SetVoiceModel(const std::filesystem::path& path)
     if (!Ok(voicevox_voice_model_file_open(utf8Path.c_str(), &next), "open voice model", error_, errorMutex_)) return false;
     // モデル切り替えは合成処理と直列化するが、全体Cancelは行わない。
     // Cancelすると別スレッドIDの再生まで停止してしまう。
-    if (!Ok(voicevox_synthesizer_load_voice_model(synthesizer_, next), "load voice model", error_, errorMutex_)) {
+
+    VoicevoxLoadVoiceModelOptions load_voice_options{};
+    load_voice_options.on_existing = VOICEVOX_ON_EXISTING_VOICE_MODEL_ID_SKIP;
+
+    if (!Ok(voicevox_synthesizer_load_voice_model(synthesizer_, next, load_voice_options), "load voice model", error_, errorMutex_)) {
         voicevox_voice_model_file_delete(next);
         return false;
     }

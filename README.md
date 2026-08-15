@@ -35,8 +35,8 @@ Rename the extracted folder to `CodexParakeet` if necessary.
 
 ### 1. Obtain and place VOICEVOX CORE
 
-Download **VOICEVOX CORE 0.16.4 for Windows x64** from the [official release
-page](https://github.com/VOICEVOX/voicevox_core/releases/tag/0.16.4).
+Download **VOICEVOX CORE 0.17.0 for Windows x64** from the [official release
+page](https://github.com/VOICEVOX/voicevox_core/releases/tag/0.17.0).
 
 Extract the contents of the VOICEVOX CORE archive into the
 `voicevox_core/` folder inside the extracted `CodexParakeet` folder.
@@ -105,14 +105,14 @@ CodexParakeet has been verified in the following environment:
 
 - Windows 11
 - The ChatGPT Codex app: [Introducing the Codex app](https://openai.com/ja-JP/index/introducing-the-codex-app/)
-- [VOICEVOX CORE 0.16.4](https://github.com/VOICEVOX/voicevox_core/releases/tag/0.16.4), x64 Windows release
+- [VOICEVOX CORE 0.17.0](https://github.com/VOICEVOX/voicevox_core/releases/tag/0.17.0), x64 Windows release
 - Visual Studio 2026
 
 Other versions may work, but have not been verified by the author.
 
 ## Building
 
-1. Obtain the x64 Windows release of VOICEVOX CORE 0.16.4.
+1. Obtain the x64 Windows release of VOICEVOX CORE 0.17.0.
 2. Place it under `third_party/voicevox_core/`.
 3. Open `app_src/CodexParakeet.slnx` in Visual Studio 2026.
 4. Build the `Release` configuration for `x64`.
