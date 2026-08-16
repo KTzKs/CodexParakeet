@@ -221,7 +221,17 @@ BOOL CCodexParakeetDlg::OnInitDialog()
 	ApplyVoiceSettings();
 	LoadMouthBitmaps();
 	theApp.Engine().SetLipSyncCallback([this](wchar_t mouth) {
-		if (m_hWnd) PostMessage(WM_APP + 103, static_cast<WPARAM>(mouth), 0);
+		if (!m_hWnd) return;
+		bool postMessage = false;
+		{
+			std::lock_guard<std::mutex> lock(lipSyncStateMutex_);
+			latestMouth_ = mouth;
+			if (!lipSyncMessagePending_) {
+				lipSyncMessagePending_ = true;
+				postMessage = true;
+			}
+		}
+		if (postMessage) PostMessage(WM_APP + 103);
 	});
 
 	// 初回起動がHookからの呼び出しだった場合、その引数も読み上げる。
@@ -297,9 +307,17 @@ void CCodexParakeetDlg::ResetLipBackBuffer(const CSize& size, CDC& referenceDc)
 
 LRESULT CCodexParakeetDlg::OnLipSync(WPARAM wParam, LPARAM)
 {
-	const wchar_t mouth = static_cast<wchar_t>(wParam);
+	UNREFERENCED_PARAMETER(wParam);
+	wchar_t mouth;
+	{
+		std::lock_guard<std::mutex> lock(lipSyncStateMutex_);
+		mouth = latestMouth_;
+		lipSyncMessagePending_ = false;
+	}
+	if (mouth == displayedMouth_) return 0;
 	const auto it = mouthBitmaps_.find(mouth);
 	if (it != mouthBitmaps_.end()) {
+		displayedMouth_ = mouth;
 		::SetPropW(m_ParakeetArea.GetSafeHwnd(), L"CodexParakeet.Mouth",
 			reinterpret_cast<HANDLE>(it->second));
 		m_ParakeetArea.Invalidate();

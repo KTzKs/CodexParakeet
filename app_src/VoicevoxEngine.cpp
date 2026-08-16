@@ -1,17 +1,18 @@
 ﻿#include "pch.h"
 #include "VoicevoxEngine.h"
+#include "Common.h"
 #include <mmsystem.h>
 #include <cctype>
 #include <cstdlib>
 #include <sstream>
-#include <regex>
 #include <chrono>
 #include <cmath>
 #include <shlobj.h>
-#pragma comment(lib, "winmm.lib")
+#include <json.hpp>
 
-// 音声出力に対するリップシンクの遅延補正値（ミリ秒）。
-constexpr DWORD kLipSyncDelayMs = 350;
+// リップシンクの補正値（ミリ秒）。
+// 正の値で口の動きを早め、負の値で遅らせる。
+constexpr int kLipSyncOffsetMs = 100;
 
 static double ReadSpeed(const std::filesystem::path& ini) {
     wchar_t value[64] = L"1.0";
@@ -236,23 +237,44 @@ void VoicevoxEngine::SynthesisLoop() {
         // 子音がないモーラでは consonant_length が null になるため、
         // nullまたは数値の両方を受け付ける。
         std::vector<std::pair<wchar_t, double>> mouthSchedule;
-        double prePhonemeLength = 0.0;
-        const std::regex prePhonemeRegex(R"REGEX("prePhonemeLength"\s*:\s*([0-9.eE+-]+))REGEX");
-        std::smatch prePhonemeMatch;
-        if (std::regex_search(queryText, prePhonemeMatch, prePhonemeRegex)) {
-            prePhonemeLength = std::stod(prePhonemeMatch.str(1));
-        }
-        const std::regex moraRegex(R"REGEX("consonant_length"\s*:\s*(null|[0-9.eE+-]+)\s*,\s*"vowel"\s*:\s*"([^"]+)"\s*,\s*"vowel_length"\s*:\s*([0-9.eE+-]+))REGEX");
-        for (std::sregex_iterator i(queryText.begin(), queryText.end(), moraRegex), end; i != end; ++i) {
-            const auto& m = *i;
-            const std::string vowelText = m.str(2);
+        const auto audioQuery = nlohmann::json::parse(queryText);
+        const char* accentPhrasesKey = audioQuery.contains("accent_phrases")
+            ? "accent_phrases" : "accentPhrases";
+        const char* prePhonemeLengthKey = audioQuery.contains("pre_phoneme_length")
+            ? "pre_phoneme_length" : "prePhonemeLength";
+        const double prePhonemeLength = audioQuery.value(prePhonemeLengthKey, 0.0);
+        for (const auto& accentPhrase : audioQuery.value(accentPhrasesKey, nlohmann::json::array())) {
+            for (const auto& mora : accentPhrase.value("moras", nlohmann::json::array())) {
+            const std::string vowelText = mora.value("vowel", "");
             const wchar_t vowel = vowelText.size() == 1 &&
                 std::string("aiueo").find(vowelText[0]) != std::string::npos
                 ? static_cast<wchar_t>(vowelText[0]) : L'c';
-            const double consonantLength = m.str(1) == "null" ? 0.0 : std::stod(m.str(1));
-            const double vowelLength = std::stod(m.str(3));
+            const char* consonantLengthKey = mora.contains("consonant_length")
+                ? "consonant_length" : "consonantLength";
+            const char* vowelLengthKey = mora.contains("vowel_length")
+                ? "vowel_length" : "vowelLength";
+            const double consonantLength = mora.contains(consonantLengthKey) &&
+                mora[consonantLengthKey].is_number()
+                ? mora[consonantLengthKey].get<double>() : 0.0;
+            const double vowelLength = mora.contains(vowelLengthKey) &&
+                mora[vowelLengthKey].is_number()
+                ? mora[vowelLengthKey].get<double>() : 0.0;
             if (consonantLength > 0.0) mouthSchedule.emplace_back(L'c', consonantLength);
             mouthSchedule.emplace_back(vowel, vowelLength);
+            }
+            const char* pauseMoraKey = accentPhrase.contains("pause_mora")
+                ? "pause_mora" : "pauseMora";
+            if (accentPhrase.contains(pauseMoraKey) &&
+                accentPhrase[pauseMoraKey].is_object()) {
+                const auto& pauseMora = accentPhrase[pauseMoraKey];
+                const char* pauseLengthKey = pauseMora.contains("vowel_length")
+                    ? "vowel_length" : "vowelLength";
+                if (pauseMora.contains(pauseLengthKey) &&
+                    pauseMora[pauseLengthKey].is_number()) {
+                    const double pauseLength = pauseMora[pauseLengthKey].get<double>();
+                    mouthSchedule.emplace_back(L'c', pauseLength);
+                }
+            }
         }
         // speedScale は音声の再生時間を変えるため、口形側の時間も同じ倍率で補正する。
         const double speechSpeed = speed_.load();
@@ -260,8 +282,7 @@ void VoicevoxEngine::SynthesisLoop() {
             UNREFERENCED_PARAMETER(mouth);
             duration /= speechSpeed;
         }
-        // 発声前の無音は口閉じとして保持する。音声出力との全体遅延は
-        // PlaybackLoop側のkLipSyncDelayMsで補正する。
+        // 発声前の無音は口閉じとして保持する。
         mouthSchedule.insert(mouthSchedule.begin(), { L'c', prePhonemeLength / speechSpeed });
         size_t playbackSlot = 0;
         {
@@ -341,17 +362,36 @@ void VoicevoxEngine::PlaybackLoop(size_t playbackSlot) {
                     const bool prepared = waveOutPrepareHeader(device, &header, sizeof(header)) == MMSYSERR_NOERROR;
                     if (prepared &&
                         waveOutWrite(device, &header, sizeof(header)) == MMSYSERR_NOERROR) {
-                        Sleep(kLipSyncDelayMs);
+                        const ULONGLONG positionWaitStart = GetTickCount64();
+                        while (!stopping_ && GetTickCount64() - positionWaitStart < 1000) {
+                            MMTIME position{};
+                            position.wType = TIME_BYTES;
+                            const MMRESULT positionResult = waveOutGetPosition(
+                                device, &position, sizeof(position));
+                            if (positionResult != MMSYSERR_NOERROR || position.wType != TIME_BYTES) {
+                                break;
+                            }
+                            if (position.u.cb > 0) {
+                                break;
+                            }
+                            Sleep(1);
+                        }
                         const auto started = std::chrono::steady_clock::now();
                         size_t mouthIndex = 0;
                         double mouthEnd = 0.0;
                         NotifyLipSync(L'c');
                         while ((header.dwFlags & WHDR_DONE) == 0 && !stopping_ && item.requestId == RequestFor(item.threadId)) {
-                            const double elapsed = std::chrono::duration<double>(std::chrono::steady_clock::now() - started).count();
-                            if (mouthIndex < item.mouthSchedule.size() && elapsed >= mouthEnd) {
-                                NotifyLipSync(item.mouthSchedule[mouthIndex].first);
-                                mouthEnd += item.mouthSchedule[mouthIndex].second;
-                                ++mouthIndex;
+                            const double elapsed = std::chrono::duration<double>(std::chrono::steady_clock::now() - started).count()
+                                + static_cast<double>(kLipSyncOffsetMs) / 1000.0;
+                            size_t nextMouthIndex = mouthIndex;
+                            while (nextMouthIndex < item.mouthSchedule.size() && elapsed >= mouthEnd) {
+                                mouthEnd += item.mouthSchedule[nextMouthIndex].second;
+                                ++nextMouthIndex;
+                            }
+                            if (nextMouthIndex != mouthIndex) {
+                                mouthIndex = nextMouthIndex;
+                                const auto& mouth = item.mouthSchedule[mouthIndex - 1];
+                                NotifyLipSync(mouth.first);
                             }
                             Sleep(5);
                         }

@@ -5,6 +5,7 @@
 #pragma once
 #include <map>
 #include <string>
+#include <mutex>
 
 
 // CCodexParakeetDlg ダイアログ
@@ -68,4 +69,8 @@ private:
 	bool m_SettingButtonState;
 	CButton m_OnlyFirstSentence;
 	CButton m_CheckAllSentence;
+	std::mutex lipSyncStateMutex_;
+	wchar_t latestMouth_ = L'c';
+	wchar_t displayedMouth_ = L'c';
+	bool lipSyncMessagePending_ = false;
 };

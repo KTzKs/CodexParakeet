@@ -60,11 +60,11 @@
   <ItemDefinitionGroup>
     <ClCompile>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\third_party\voicevox_core\c_api\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\third_party\voicevox_core\c_api\include;$(ProjectDir)nlohmannjson;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(ProjectDir)..\third_party\voicevox_core\c_api\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>voicevox_core.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>voicevox_core.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ImportGroup Label="ExtensionSettings">
@@ -206,6 +206,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Common.h" />
+    <ClInclude Include="nlohmannjson\json.hpp" />
     <ClInclude Include="VoicevoxEngine.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="pch.h" />
