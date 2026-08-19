@@ -57,9 +57,15 @@ public static class WP {
                 $r = New-Object WP+R
                 if ([WP]::GetWindowRect($h,[ref]$r)) {
                     $centerX = [int](($r.L + $r.Rt) / 2)
-                    $screenWidth = [WP]::GetSystemMetrics(0)
+                    # 仮想デスクトップ全体の幅（マルチモニタ対応）
+                    $screenWidth = [int][WP]::GetSystemMetrics(78) # SM_CXVIRTUALSCREEN
+                    if ($screenWidth -le 0) {
+                        $screenWidth = [int][WP]::GetSystemMetrics(0) # SM_CXSCREEN
+                    }
                     $pos = "$centerX,$screenWidth"
-                    Log "WINDOW pid=$($q.ProcessId) pos=$pos"
+                    $windowWidth = $r.Rt - $r.L
+                    $windowHeight = $r.B - $r.T
+                    Log "DESKTOP virtualWidth=$screenWidth WINDOW position=($($r.L),$($r.T)) size=($windowWidth,$windowHeight) centerX=$centerX PASSED_POSITION=$pos"
                     break
                 }
             }

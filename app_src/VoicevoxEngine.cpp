@@ -1,4 +1,4 @@
-﻿#include "pch.h"
+#include "pch.h"
 #include "VoicevoxEngine.h"
 #include "Common.h"
 #include <mmsystem.h>

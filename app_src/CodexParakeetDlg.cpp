@@ -1,4 +1,4 @@
-﻿
+
 // CodexParakeetDlg.cpp : 実装ファイル
 //
 

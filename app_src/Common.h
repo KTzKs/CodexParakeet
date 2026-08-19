@@ -1,4 +1,4 @@
-﻿#define APP_NAME           _T("CodexParakeet")
+#define APP_NAME           _T("CodexParakeet")
 #pragma once
 
 #define APP_NAME _T("CodexParakeet")

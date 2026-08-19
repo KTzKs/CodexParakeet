@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #ifndef VC_EXTRALEAN
 #define VC_EXTRALEAN            // Windows ヘッダーから使用されていない部分を除外します。

@@ -1,4 +1,4 @@
-﻿
+
 // CodexParakeet.h : PROJECT_NAME アプリケーションのメイン ヘッダー ファイルです
 //
 

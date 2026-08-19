@@ -1,4 +1,4 @@
-﻿
+
 // CodexParakeetDlg.h : ヘッダー ファイル
 //
 
