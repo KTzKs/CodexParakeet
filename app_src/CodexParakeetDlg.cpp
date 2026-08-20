@@ -24,8 +24,8 @@
 #define SIZE1_WIDTH 280
 #define SIZE1_HEIGHT 220
 
-#define SIZE2_WIDTH 680
-#define SIZE2_HEIGHT 300
+#define SIZE2_WIDTH 690
+#define SIZE2_HEIGHT 420
 
 static void WriteSpeakLog(const std::wstring& message)
 {
@@ -149,6 +149,8 @@ CCodexParakeetDlg::CCodexParakeetDlg(CWnd* pParent /*=nullptr*/)
 	, m_SettingButtonState(false)
 	, m_OnlyFirstSentence()
 	, m_CheckAllSentence()
+	, m_SliderOnryo()
+	, m_SliderOnzo()
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -163,6 +165,8 @@ void CCodexParakeetDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_CHECK2, m_CheckOnzo);
 	DDX_Control(pDX, IDC_RADIO1, m_OnlyFirstSentence);
 	DDX_Control(pDX, IDC_RADIO2, m_CheckAllSentence);
+	DDX_Control(pDX, IDC_SLIDER2, m_SliderOnryo);
+	DDX_Control(pDX, IDC_SLIDER1, m_SliderOnzo);
 }
 
 BEGIN_MESSAGE_MAP(CCodexParakeetDlg, CDialogEx)
@@ -217,6 +221,13 @@ BOOL CCodexParakeetDlg::OnInitDialog()
 	SetWindowText(APP_NAME);  // ウィンドウタイトルを設定
 	AddTrayIcon();
 	SetTimer(1, 1000, nullptr);
+	m_SliderOnryo.SetRange(0, 100, TRUE);
+	m_SliderOnryo.SetTicFreq(10);
+	m_SliderOnryo.SetPageSize(10);
+	// 音像位置は左・中央・右の3段階に限定する。
+	m_SliderOnzo.SetRange(0, 2, TRUE);
+	m_SliderOnzo.SetTicFreq(1);
+	m_SliderOnzo.SetPageSize(1);
 	LoadVoiceSettings();
 	ApplyVoiceSettings();
 	LoadMouthBitmaps();
@@ -491,23 +502,28 @@ static std::filesystem::path CodexParakeetIniPath()
 void CCodexParakeetDlg::LoadVoiceSettings()
 {
 	const auto ini = CodexParakeetIniPath();
-	wchar_t speed[64]{}, silence[64]{}, enableTTS[16]{};
-	wchar_t enableOnzo[16]{};
+	wchar_t speed[64]{}, silence[64]{}, volume[16]{}, enableTTS[16]{};
+	wchar_t enableOnzo[16]{}, onzoEmphasis[16]{};
 	wchar_t enableFirst[16]{};
 	GetPrivateProfileStringW(L"Voice", L"Speed", L"1.4", speed, _countof(speed), ini.c_str());
 	GetPrivateProfileStringW(L"Voice", L"EndSilenceMs", L"100", silence, _countof(silence), ini.c_str());
+	GetPrivateProfileStringW(L"Voice", L"Volume", L"100", volume, _countof(volume), ini.c_str());
 	// iniが存在しない初回起動では、Codex読上げを有効にする。
 	const wchar_t* defaultEnableTTS = L"1";
 	GetPrivateProfileStringW(L"Voice", L"EnableTTS", defaultEnableTTS,
 		enableTTS, _countof(enableTTS), ini.c_str());
 	GetPrivateProfileStringW(L"Voice", L"EnableOnzo", L"1",
 		enableOnzo, _countof(enableOnzo), ini.c_str());
+	GetPrivateProfileStringW(L"Voice", L"OnzoEmphasis", L"1",
+		onzoEmphasis, _countof(onzoEmphasis), ini.c_str());
 	GetPrivateProfileStringW(L"Voice", L"EnableFirstSentense", L"1",
 		enableFirst, _countof(enableFirst), ini.c_str());
 	m_EditSokudo.SetWindowTextW(speed);
 	m_EditMuon.SetWindowTextW(silence);
+	m_SliderOnryo.SetPos(max(0L, min(100L, _wtol(volume))));
 	m_CheckEnableTTS.SetCheck(_wtol(enableTTS) != 0 ? BST_CHECKED : BST_UNCHECKED);
 	m_CheckOnzo.SetCheck(_wtol(enableOnzo) != 0 ? BST_CHECKED : BST_UNCHECKED);
+	m_SliderOnzo.SetPos(max(0L, min(2L, _wtol(onzoEmphasis))));
 	if (_wtol(enableFirst) != 0)
 	{
 		m_OnlyFirstSentence.SetCheck(BST_CHECKED);
@@ -529,10 +545,14 @@ void CCodexParakeetDlg::SaveVoiceSettings()
 	const auto ini = CodexParakeetIniPath();
 	WritePrivateProfileStringW(L"Voice", L"Speed", speed, ini.c_str());
 	WritePrivateProfileStringW(L"Voice", L"EndSilenceMs", silence, ini.c_str());
+	const CString volumeValue = std::to_wstring(max(0, min(100, m_SliderOnryo.GetPos()))).c_str();
+	WritePrivateProfileStringW(L"Voice", L"Volume", volumeValue, ini.c_str());
 	WritePrivateProfileStringW(L"Voice", L"EnableTTS",
 		m_CheckEnableTTS.GetCheck() == BST_CHECKED ? L"1" : L"0", ini.c_str());
 	WritePrivateProfileStringW(L"Voice", L"EnableOnzo",
 		m_CheckOnzo.GetCheck() == BST_CHECKED ? L"1" : L"0", ini.c_str());
+	const CString onzoEmphasis = std::to_wstring(max(0, min(2, m_SliderOnzo.GetPos()))).c_str();
+	WritePrivateProfileStringW(L"Voice", L"OnzoEmphasis", onzoEmphasis, ini.c_str());
 	WritePrivateProfileStringW(L"Voice", L"EnableFirstSentense",
 		m_OnlyFirstSentence.GetCheck() == BST_CHECKED ? L"1" : L"0", ini.c_str());
 }
@@ -543,6 +563,7 @@ void CCodexParakeetDlg::ApplyVoiceSettings()
 	m_EditSokudo.GetWindowText(speed);
 	m_EditMuon.GetWindowText(silence);
 	theApp.Engine().SetVoiceSettings(_wtof(speed), static_cast<DWORD>(_wtol(silence)));
+	theApp.Engine().SetOutputVolume(m_SliderOnryo.GetPos());
 }
 
 BOOL CCodexParakeetDlg::OnCopyData(CWnd* pWnd, COPYDATASTRUCT* pCopyDataStruct)
@@ -601,7 +622,8 @@ void CCodexParakeetDlg::SpeakMessage(const CString& message, const CString& thre
 	if (m_CheckOnzo.GetCheck() == BST_CHECKED)
 	{
 		int comma = spatial.Find(_T(','));
-		if (comma > 0) theApp.Engine().SetSpatialPosition(_ttoi(spatial.Left(comma)), _ttoi(spatial.Mid(comma + 1)));
+		if (comma > 0) theApp.Engine().SetSpatialPosition(
+			_ttoi(spatial.Left(comma)), _ttoi(spatial.Mid(comma + 1)), m_SliderOnzo.GetPos());
 		else theApp.Engine().ClearSpatialPosition();
 	}
 	else

@@ -4,7 +4,7 @@ CodexParakeet is a lightweight Windows application that converts Codex CLI respo
 
 詳しい紹介とスクリーンショットは、[CodexParakeet 公式ページ](https://ktzks.github.io/CodexParakeet/)をご覧ください。
 
-Version: **1.0.0**
+Version: **1.1.0**
 
 ## Overview
 

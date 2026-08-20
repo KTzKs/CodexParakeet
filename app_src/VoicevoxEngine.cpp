@@ -9,6 +9,28 @@
 #include <cmath>
 #include <shlobj.h>
 #include <json.hpp>
+#include <fstream>
+#include <iomanip>
+
+static void WriteAudioLog(const std::wstring& message)
+{
+#ifdef OUTPUT_LOG
+    static std::mutex logMutex;
+    std::lock_guard<std::mutex> lock(logMutex);
+    wchar_t executablePath[MAX_PATH]{};
+    GetModuleFileNameW(nullptr, executablePath, MAX_PATH);
+    const auto logPath = std::filesystem::path(executablePath).parent_path() / L"CodexParakeet.log";
+    std::wofstream log(logPath, std::ios::app);
+    if (!log) return;
+    const auto now = std::chrono::system_clock::now();
+    const auto time = std::chrono::system_clock::to_time_t(now);
+    std::tm localTime{};
+    localtime_s(&localTime, &time);
+    log << std::put_time(&localTime, L"%Y-%m-%d %H:%M:%S") << L" " << message << L"\n";
+#else
+    UNREFERENCED_PARAMETER(message);
+#endif
+}
 
 // リップシンクの補正値（ミリ秒）。
 // 正の値で口の動きを早め、負の値で遅らせる。
@@ -134,10 +156,11 @@ void VoicevoxEngine::SpeakLines(const std::vector<std::wstring>& lines, const st
         requestModel = modelPath_;
     }
     const uint32_t requestSpeaker = speakerId_.load();
-    const int requestLeftDelayMs = spatialLeftDelayMs_.load();
-    const int requestRightDelayMs = spatialRightDelayMs_.load();
+    const double requestLeftDelaySeconds = spatialLeftDelaySeconds_.load();
+    const double requestRightDelaySeconds = spatialRightDelaySeconds_.load();
     const double requestLeftGain = spatialLeftGain_.load();
     const double requestRightGain = spatialRightGain_.load();
+    const double requestVolume = outputVolume_.load();
     {
         std::lock_guard<std::mutex> lock(queueMutex_);
         // 同時に保持するスレッドIDは3つまで。4つ目以降は最初の枠を奪う。
@@ -161,7 +184,7 @@ void VoicevoxEngine::SpeakLines(const std::vector<std::wstring>& lines, const st
         }
         for (const auto& line : lines) if (!line.empty())
             textQueue_.push_back({ line, threadId, requestId, requestModel, requestSpeaker,
-                requestLeftDelayMs, requestRightDelayMs, requestLeftGain, requestRightGain });
+                requestLeftDelaySeconds, requestRightDelaySeconds, requestLeftGain, requestRightGain, requestVolume });
     }
     {
         std::lock_guard<std::mutex> lock(audioMutex_);
@@ -297,7 +320,7 @@ void VoicevoxEngine::SynthesisLoop() {
         {
             std::lock_guard<std::mutex> lock(audioMutex_);
             audioQueues_[playbackSlot].push_back({ wav, length, requestId, std::move(mouthSchedule),
-                job.leftDelayMs, job.rightDelayMs, job.leftGain, job.rightGain, job.threadId, playbackSlot });
+                job.leftDelaySeconds, job.rightDelaySeconds, job.leftGain, job.rightGain, job.volume, job.threadId, playbackSlot });
         }
         // 3本のワーカーはそれぞれ別キューを監視しているため、
         // notify_one() では別スロットのワーカーだけが起きて通知を消費する。
@@ -324,7 +347,19 @@ void VoicevoxEngine::PlaybackLoop(size_t playbackSlot) {
                 WAVEFORMATEX format{};
                 format.wFormatTag = *reinterpret_cast<const WORD*>(wav + 20);
                 const WORD sourceChannels = *reinterpret_cast<const WORD*>(wav + 22);
-                format.nChannels = (item.leftDelayMs || item.rightDelayMs) ? 2 : sourceChannels;
+                const size_t leftDelaySamples = static_cast<size_t>(std::round(item.leftDelaySeconds * *reinterpret_cast<const DWORD*>(wav + 24)));
+                const size_t rightDelaySamples = static_cast<size_t>(std::round(item.rightDelaySeconds * *reinterpret_cast<const DWORD*>(wav + 24)));
+                const auto sampleRate = *reinterpret_cast<const DWORD*>(wav + 24);
+                const auto delaySamples = leftDelaySamples > rightDelaySamples ? leftDelaySamples : rightDelaySamples;
+                WriteAudioLog(L"SPATIAL thread=" + item.threadId +
+                    L" sampleRate=" + std::to_wstring(sampleRate) +
+                    L" leftSamples=" + std::to_wstring(leftDelaySamples) +
+                    L" rightSamples=" + std::to_wstring(rightDelaySamples) +
+                    L" delaySamples=" + std::to_wstring(delaySamples) +
+                    L" delayUs=" + std::to_wstring(
+                        static_cast<unsigned long long>(std::llround(
+                            static_cast<double>(delaySamples) * 1000000.0 / sampleRate))));
+                format.nChannels = (leftDelaySamples || rightDelaySamples) ? 2 : sourceChannels;
                 format.nSamplesPerSec = *reinterpret_cast<const DWORD*>(wav + 24);
                 format.nAvgBytesPerSec = *reinterpret_cast<const DWORD*>(wav + 28);
                 format.nBlockAlign = *reinterpret_cast<const WORD*>(wav + 32);
@@ -337,24 +372,31 @@ void VoicevoxEngine::PlaybackLoop(size_t playbackSlot) {
                 const MMRESULT openResult = waveOutOpen(&device, WAVE_MAPPER, &format, 0, 0, CALLBACK_NULL);
                 if (openResult == MMSYSERR_NOERROR) {
                     std::vector<int16_t> spatialSamples;
+                    std::vector<int16_t> volumeSamples;
                     const uint8_t* audioData = wav + 44;
                     DWORD audioBytes = static_cast<DWORD>(item.length - 44);
-                    if ((item.leftDelayMs || item.rightDelayMs) && sourceChannels == 1 && format.wBitsPerSample == 16) {
+                    if ((leftDelaySamples || rightDelaySamples) && sourceChannels == 1 && format.wBitsPerSample == 16) {
                         const size_t samples = audioBytes / sizeof(int16_t);
-                        const int sampleRate = static_cast<int>(format.nSamplesPerSec);
-                        const size_t leftDelay = static_cast<size_t>(item.leftDelayMs * sampleRate / 1000);
-                        const size_t rightDelay = static_cast<size_t>(item.rightDelayMs * sampleRate / 1000);
-                        spatialSamples.assign((samples + max(leftDelay, rightDelay)) * 2, 0);
+                        spatialSamples.assign((samples + max(leftDelaySamples, rightDelaySamples)) * 2, 0);
                         const auto* mono = reinterpret_cast<const int16_t*>(audioData);
                         for (size_t i = 0; i < samples; ++i) {
                             const auto clamp = [](double value) {
                                 return static_cast<int16_t>(max(-32768.0, min(32767.0, value)));
                             };
-                            spatialSamples[(i + leftDelay) * 2] = clamp(mono[i] * item.leftGain);
-                            spatialSamples[(i + rightDelay) * 2 + 1] = clamp(mono[i] * item.rightGain);
+                        spatialSamples[(i + leftDelaySamples) * 2] = clamp(mono[i] * item.leftGain * item.volume);
+                        spatialSamples[(i + rightDelaySamples) * 2 + 1] = clamp(mono[i] * item.rightGain * item.volume);
                         }
                         audioData = reinterpret_cast<const uint8_t*>(spatialSamples.data());
                         audioBytes = static_cast<DWORD>(spatialSamples.size() * sizeof(int16_t));
+                    }
+                    else if (item.volume != 1.0 && format.wBitsPerSample == 16) {
+                        const size_t samples = audioBytes / sizeof(int16_t);
+                        volumeSamples.resize(samples);
+                        const auto* source = reinterpret_cast<const int16_t*>(audioData);
+                        for (size_t i = 0; i < samples; ++i) {
+                            volumeSamples[i] = static_cast<int16_t>(source[i] * item.volume);
+                        }
+                        audioData = reinterpret_cast<const uint8_t*>(volumeSamples.data());
                     }
                     WAVEHDR header{};
                     header.lpData = reinterpret_cast<LPSTR>(const_cast<uint8_t*>(audioData));
@@ -410,6 +452,12 @@ void VoicevoxEngine::PlaybackLoop(size_t playbackSlot) {
     }
 }
 
+void VoicevoxEngine::SetOutputVolume(int percent)
+{
+    const int clampedPercent = percent < 0 ? 0 : (percent > 100 ? 100 : percent);
+    outputVolume_.store(clampedPercent / 100.0);
+}
+
 void VoicevoxEngine::SetVoiceSettings(double speed, DWORD endSilenceMs)
 {
     speed_.store(speed > 0.1 && speed < 10.0 ? speed : 1.0);
@@ -421,7 +469,7 @@ void VoicevoxEngine::SetSpeaker(uint32_t speakerId)
     speakerId_.store(speakerId);
 }
 
-void VoicevoxEngine::SetSpatialPosition(int centerX, int screenWidth)
+void VoicevoxEngine::SetSpatialPosition(int centerX, int screenWidth, int emphasis)
 {
     if (screenWidth <= 0) { ClearSpatialPosition(); return; }
     // モニタ幅70cm・距離50cm。PS1から渡された実際の画面幅を物差しにする。
@@ -432,10 +480,15 @@ void VoicevoxEngine::SetSpatialPosition(int centerX, int screenWidth)
     const double left = std::sqrt(distance * distance + (x + ear) * (x + ear));
     const double right = std::sqrt(distance * distance + (x - ear) * (x - ear));
     const double difference = (left - right) / 343.0;
-    // 検証用に、物理値を3倍して定位を強調する。
-    const int delayMs = static_cast<int>(std::round(std::abs(difference) * 1000.0 * 3.0));
-    spatialLeftDelayMs_.store(difference > 0 ? delayMs : 0);
-    spatialRightDelayMs_.store(difference < 0 ? delayMs : 0);
+    // 0: 1倍、1: 3倍、2: 5倍。
+    const double multiplier = emphasis == 1 ? 3.0 : emphasis == 2 ? 5.0 : 1.0;
+    const double delaySeconds = std::abs(difference) * multiplier;
+    WriteAudioLog(L"SPATIAL_REQUEST centerX=" + std::to_wstring(centerX) +
+        L" screenWidth=" + std::to_wstring(screenWidth) +
+        L" emphasis=" + std::to_wstring(emphasis) +
+        L" delayUs=" + std::to_wstring(static_cast<long long>(std::llround(delaySeconds * 1000000.0))));
+    spatialLeftDelaySeconds_.store(difference > 0 ? delaySeconds : 0.0);
+    spatialRightDelaySeconds_.store(difference < 0 ? delaySeconds : 0.0);
 
     const double side = max(-1.0, min(1.0, (static_cast<double>(centerX) - screenCenter) / screenCenter));
     // 音量差db。
@@ -447,8 +500,8 @@ void VoicevoxEngine::SetSpatialPosition(int centerX, int screenWidth)
 
 void VoicevoxEngine::ClearSpatialPosition()
 {
-    spatialLeftDelayMs_.store(0);
-    spatialRightDelayMs_.store(0);
+    spatialLeftDelaySeconds_.store(0.0);
+    spatialRightDelaySeconds_.store(0.0);
     spatialLeftGain_.store(1.0);
     spatialRightGain_.store(1.0);
 }

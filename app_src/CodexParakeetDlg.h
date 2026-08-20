@@ -73,4 +73,6 @@ private:
 	wchar_t latestMouth_ = L'c';
 	wchar_t displayedMouth_ = L'c';
 	bool lipSyncMessagePending_ = false;
+	CSliderCtrl m_SliderOnryo;
+	CSliderCtrl m_SliderOnzo;
 };

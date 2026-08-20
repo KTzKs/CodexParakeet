@@ -1,6 +1,14 @@
 $exe = Join-Path $PSScriptRoot 'CodexParakeet.exe'
 $log = Join-Path $PSScriptRoot 'codex_speak_notify.log'
-function Log([string]$s) { }
+function Log([string]$s) {
+    try {
+        $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss.fff'
+        # Add-Content -LiteralPath $log -Value "[$timestamp] $s" -Encoding UTF8 -ErrorAction SilentlyContinue
+    }
+    catch {
+        # Logging must never prevent the notification handler from running.
+    }
+}
 Log "START pid=$PID args=$($args.Count)"
 try {
     Add-Type @'
@@ -56,16 +64,12 @@ public static class WP {
             if ($h -ne [IntPtr]::Zero) {
                 $r = New-Object WP+R
                 if ([WP]::GetWindowRect($h,[ref]$r)) {
-                    $centerX = [int](($r.L + $r.Rt) / 2)
-                    # 仮想デスクトップ全体の幅（マルチモニタ対応）
-                    $screenWidth = [int][WP]::GetSystemMetrics(78) # SM_CXVIRTUALSCREEN
-                    if ($screenWidth -le 0) {
-                        $screenWidth = [int][WP]::GetSystemMetrics(0) # SM_CXSCREEN
-                    }
+                    $windowCenterX = [int](($r.L + $r.Rt) / 2)
+                    $virtualLeft = [WP]::GetSystemMetrics(76) # SM_XVIRTUALSCREEN
+                    $screenWidth = [WP]::GetSystemMetrics(78) # SM_CXVIRTUALSCREEN
+                    $centerX = $windowCenterX - $virtualLeft
                     $pos = "$centerX,$screenWidth"
-                    $windowWidth = $r.Rt - $r.L
-                    $windowHeight = $r.B - $r.T
-                    Log "DESKTOP virtualWidth=$screenWidth WINDOW position=($($r.L),$($r.T)) size=($windowWidth,$windowHeight) centerX=$centerX PASSED_POSITION=$pos"
+                    Log "WINDOW pid=$($q.ProcessId) windowCenterX=$windowCenterX virtualLeft=$virtualLeft pos=$pos"
                     break
                 }
             }
@@ -75,6 +79,7 @@ public static class WP {
     if ([string]::IsNullOrWhiteSpace($pos)) { Log 'POSITION_NOT_FOUND' }
     if (-not [string]::IsNullOrWhiteSpace($msg) -and (Test-Path $exe)) {
         $messageBase64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($msg))
+        Log "EXE_ARGS screenPosition=$pos threadId=$tid"
         Log "SPEAK pos=$pos encodedLength=$($messageBase64.Length)"
         & $exe "--message-base64=$messageBase64" $tid $pos
     }
