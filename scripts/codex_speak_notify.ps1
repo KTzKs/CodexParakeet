@@ -54,8 +54,17 @@ public static class WP {
         try {
             $metadata = $trimmedMessage | ConvertFrom-Json -ErrorAction Stop
             $properties = @($metadata | Get-Member -MemberType NoteProperty | Select-Object -ExpandProperty Name)
-            if ($properties -contains 'title' -and $properties -contains 'description') {
-                Log 'IGNORED internal title/description metadata'
+            $isTitleOnlyMetadata = $properties.Count -eq 1 -and $properties[0] -eq 'title'
+            $isTaskTitleRequest = $false
+            foreach ($inputMessage in @($p.'input-messages')) {
+                if ([string]$inputMessage -match '(?i)Generate a concise, single-line task title') {
+                    $isTaskTitleRequest = $true
+                    break
+                }
+            }
+            $isTitleDescriptionMetadata = $properties -contains 'title' -and $properties -contains 'description'
+            if ($isTitleDescriptionMetadata -or ($isTitleOnlyMetadata -and $isTaskTitleRequest)) {
+                Log 'IGNORED internal title metadata'
                 if ($titleChanged) {
                     try { $Host.UI.RawUI.WindowTitle = $originalTitle; $titleChanged = $false; Log "WINDOW_TITLE_RESTORED title=$originalTitle" } catch { Log "TITLE_RESTORE_FAILED $($_.Exception.Message)" }
                 }
