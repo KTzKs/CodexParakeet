@@ -15,6 +15,11 @@ function Log([string]$s) {
     }
 }
 Log "START pid=$PID args=$($args.Count)"
+if ($args.Count -gt 0) {
+    Log 'JSON_BEGIN'
+    Log ([string]$args[0])
+    Log 'JSON_END'
+}
 try {
     Add-Type @'
 using System;
@@ -50,28 +55,27 @@ public static class WP {
     if ([string]::IsNullOrWhiteSpace($msg)) { $msg = [string]$p.'last-assistant-message' }
     Log "PAYLOAD thread=$tid cwd=$([string]$p.cwd) length=$($msg.Length) exe=$(Test-Path $exe)"
     $trimmedMessage = $msg.Trim()
+    $ignoreMessage = $trimmedMessage -cmatch '^\{\s*"title"\s*:'
     if ($trimmedMessage.StartsWith('{') -and $trimmedMessage.EndsWith('}')) {
         try {
             $metadata = $trimmedMessage | ConvertFrom-Json -ErrorAction Stop
             $properties = @($metadata | Get-Member -MemberType NoteProperty | Select-Object -ExpandProperty Name)
-            $isTitleOnlyMetadata = $properties.Count -eq 1 -and $properties[0] -eq 'title'
-            $isTaskTitleRequest = $false
-            foreach ($inputMessage in @($p.'input-messages')) {
-                if ([string]$inputMessage -match '(?i)Generate a concise, single-line task title') {
-                    $isTaskTitleRequest = $true
-                    break
-                }
+            if ($properties -contains 'title' -and $properties -contains 'description') {
+                $ignoreMessage = $true
             }
-            $isTitleDescriptionMetadata = $properties -contains 'title' -and $properties -contains 'description'
-            if ($isTitleDescriptionMetadata -or ($isTitleOnlyMetadata -and $isTaskTitleRequest)) {
-                Log 'IGNORED internal title metadata'
-                if ($titleChanged) {
-                    try { $Host.UI.RawUI.WindowTitle = $originalTitle; $titleChanged = $false; Log "WINDOW_TITLE_RESTORED title=$originalTitle" } catch { Log "TITLE_RESTORE_FAILED $($_.Exception.Message)" }
-                }
-                exit 0
+            if (-not $ignoreMessage -and $properties -contains 'summary' -and $metadata.summary -is [string]) {
+                $msg = $metadata.summary
+                Log 'EXTRACTED summary'
             }
         }
         catch { }
+    }
+    if ($ignoreMessage) {
+        Log 'IGNORED internal title metadata'
+        if ($titleChanged) {
+            try { $Host.UI.RawUI.WindowTitle = $originalTitle; $titleChanged = $false; Log "WINDOW_TITLE_RESTORED title=$originalTitle" } catch { Log "TITLE_RESTORE_FAILED $($_.Exception.Message)" }
+        }
+        exit 0
     }
     Log 'MESSAGE_BEGIN'
     Log $msg

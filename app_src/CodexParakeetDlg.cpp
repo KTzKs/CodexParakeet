@@ -102,27 +102,6 @@ static std::vector<std::wstring> SplitSpeechLines(const CString& message)
 	return lines;
 }
 
-static std::vector<std::wstring> SelectFirstSentence(const std::vector<std::wstring>& lines)
-{
-	if (lines.empty()) return {};
-
-	std::wstring sentence;
-	for (const auto& line : lines)
-	{
-		if (!sentence.empty()) sentence += L' ';
-		sentence += line;
-
-		const auto end = sentence.find_first_of(L"。！？.!?");
-		if (end != std::wstring::npos)
-		{
-			sentence.resize(end + 1);
-			break;
-		}
-	}
-
-	return sentence.empty() ? std::vector<std::wstring>{} : std::vector<std::wstring>{sentence};
-}
-
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -632,9 +611,10 @@ void CCodexParakeetDlg::SpeakMessage(const CString& message, const CString& thre
 	}
 	ApplyVoiceSettings();
 	auto lines = SplitSpeechLines(message);
-	if (m_OnlyFirstSentence.GetCheck() == BST_CHECKED)
+	if (m_OnlyFirstSentence.GetCheck() == BST_CHECKED && lines.size() > 1)
 	{
-		lines = SelectFirstSentence(lines);
+		// 句読点では区切らず、空行とコードブロックを除いた先頭行を読む。
+		lines.resize(1);
 	}
 	std::wstring spokenText;
 	for (const auto& line : lines)
